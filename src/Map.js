@@ -1,6 +1,8 @@
 var Map = new Spineless.Event();
 Map._map = {};
-Map._regions = [];
+Map._regions = {};
+
+var points = [];
 
 var directions = [
 	[ 0,-1], // UP
@@ -40,21 +42,33 @@ function hasNeighbour (x, y) {
 	return found;
 }
 
+function randomColor () {
+	var r = clamp(0, 255, Math.random()) | 0;
+	var g = clamp(0, 255, Math.random()) | 0;
+	var b = clamp(0, 255, Math.random()) | 0;
+	return "rgb(" + r + "," + g + "," + b + ")";
+}
+
 Map.render = function () {
 	context.fillStyle = "rgb(200, 200, 200)";
 	context.fillRect(0, 0, canvas.width, canvas.height);
 
-	var points = Map.generatePoints();
+	Map.generatePoints();
+	Map.generateRegions();
 
-	for (var key in Map._map) {
+	for (var key in Map._regions) {
 		var pos = key.split(",");
+		var regions = Map._regions[key];
 
-		if (points.indexOf(key) !== -1) {
-			context.fillStyle = "rgb(200, 20, 20)";
-		} else {
-			context.fillStyle = "rgb(100, 100, 100)";
+		context.fillStyle = randomColor();
+
+		for (var i = 0; i < regions.length; ++i) {
+			var pos2 = regions[i].split(",");
+			// context.fillStyle = "rgb(100, 100, 100)";
+			context.fillRect(pos2[0] * BLOCK, pos2[1] * BLOCK, BLOCK, BLOCK);
 		}
 
+		context.fillStyle = "rgba(0, 0, 0, 0.2)";
 		context.fillRect(pos[0] * BLOCK, pos[1] * BLOCK, BLOCK, BLOCK);
 	}
 };
@@ -88,9 +102,8 @@ function distanceFromPoints (points, pos, min) {
 
 Map.generatePoints = function () {
 	var keys = Object.keys(Map._map);
-	var points = [];
 
-	for (var r = 0; r < 25; r++) {
+	for (var r = 0; r < 15; r++) {
 		var idx = Math.random() * keys.length | 0;
 		var point = keys[idx];
 
@@ -99,7 +112,7 @@ Map.generatePoints = function () {
 			point = keys[idx++];
 			
 			if (!point) {
-				idx = Math.random() * keys.length | 0;
+				idx = 0;
 				point = keys[idx];
 			}
 		} while (!distanceFromPoints(points, point, 3));
@@ -108,6 +121,30 @@ Map.generatePoints = function () {
 	}
 
 	return points;
+};
+
+// use voroni to choose regions
+Map.generateRegions = function () {
+	for (var key in Map._map) {
+		var pos = key.split(",");
+		var minDistance = Infinity;
+		var minPoint = null;
+
+		for (var i = 0; i < points.length; ++i) {
+			var ppos = points[i].split(",");
+			var distance = Math.sqrt(Math.pow(pos[0]-ppos[0], 2) + Math.pow(pos[1]-ppos[1], 2));
+			
+			if (distance < minDistance) {
+				minDistance = distance;
+				minPoint = points[i];
+			}
+		}
+
+		if (!Map._regions[minPoint])
+			Map._regions[minPoint] = [];
+
+		Map._regions[minPoint].push(key);
+	}
 };
 
 Map.init = function () {
