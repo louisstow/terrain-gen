@@ -1,0 +1,8 @@
+var BLOCK = 32;
+var GRID_WIDTH = 21;
+var GRID_HEIGHT = 21;
+
+var WIDTH = BLOCK * GRID_WIDTH;
+var HEIGHT = BLOCK * GRID_HEIGHT;
+
+var EDGE = .7;
