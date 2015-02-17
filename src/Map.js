@@ -58,6 +58,20 @@ function surroundingConnected (x, y, fn) {
 	}
 }
 
+function surroundingConnectedAll (x, y, fn) {
+	for (var i = 0; i < 4; ++i) {
+		var key = [
+			x + directions[i][0],
+			y + directions[i][1]
+		];
+
+		var k = key.join(",");
+
+		var ret = fn(key[0], key[1], k);
+		if (ret === false) return ret;
+	}
+}
+
 function hasNeighbour (x, y) {
 	var found = false;
 	
@@ -69,11 +83,10 @@ function hasNeighbour (x, y) {
 	return found;
 }
 
-function randomColor () {
-	var r = clamp(0, 255, Math.random()) | 0;
-	var g = clamp(0, 255, Math.random()) | 0;
-	var b = clamp(0, 255, Math.random()) | 0;
-	return "rgb(" + r + "," + g + "," + b + ")";
+function translate (moveBy, pos) {
+	var x = moveBy[0] + parseInt(pos[0], 10);
+	var y = moveBy[1] + parseInt(pos[1], 10);
+	return x + "," + y;
 }
 
 Map.render = function () {
@@ -84,16 +97,41 @@ Map.render = function () {
 		var pos = key.split(",");
 		var regions = Map._regions[key];
 
-		var color = players[regionOwner[key]];
-		context.fillStyle = color;
+		var owner = regionOwner[key];
+		var color = COLORS[owner];
+		var bcolor = BORDER_COLORS[owner];
 
 		for (var i = 0; i < regions.length; ++i) {
 			var pos2 = regions[i].split(",");
+			context.fillStyle = color;
 			context.fillRect(pos2[0] * BLOCK, pos2[1] * BLOCK, BLOCK, BLOCK);
+
+			var up = translate(directions[0], pos2);
+			var down = translate(directions[1], pos2);
+			var left = translate(directions[2], pos2);
+			var right = translate(directions[3], pos2);
+
+			context.fillStyle = bcolor;
+
+			if (!Map._map[up] || regions.indexOf(up) == -1) {
+				context.fillRect(pos2[0] * BLOCK, pos2[1] * BLOCK - H_BORDER, BLOCK, BORDER);
+			}
+
+			if (!Map._map[down] || regions.indexOf(down) == -1) {
+				context.fillRect(pos2[0] * BLOCK, pos2[1] * BLOCK + BLOCK - H_BORDER, BLOCK, BORDER);
+			}
+
+			if (!Map._map[left] || regions.indexOf(left) == -1) {
+				context.fillRect(pos2[0] * BLOCK - H_BORDER, pos2[1] * BLOCK, BORDER, BLOCK);
+			}
+			
+			if (!Map._map[right] || regions.indexOf(right) == -1) {
+				context.fillRect(pos2[0] * BLOCK + BLOCK - H_BORDER, pos2[1] * BLOCK, BORDER, BLOCK);
+			}
 		}
 
 		context.fillStyle = "rgba(0, 0, 0, 0.2)";
-		context.fillRect(pos[0] * BLOCK, pos[1] * BLOCK, BLOCK, BLOCK);
+		//context.fillRect(pos[0] * BLOCK, pos[1] * BLOCK, BLOCK, BLOCK);
 	}
 };
 
@@ -247,7 +285,6 @@ Map.lloydRelaxation = function () {
 		}
 
 		if (newKey != key) { 
-			console.log(newKey, key)
 			lloydChangeFlag = true;
 		}
 
@@ -268,7 +305,6 @@ Map.iterate = function () {
 Map.animate = function () {
 	setTimeout(function tick () {
 		Map.iterate();
-		console.log("iterate");
 
 		if (lloydChangeFlag) {
 			lloydChangeFlag = false;
