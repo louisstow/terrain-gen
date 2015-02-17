@@ -22,3 +22,4 @@ for (var x = 0; x < GRID_WIDTH; ++x) {
 
 Map.init();
 Map.render();
+Map.animate();
