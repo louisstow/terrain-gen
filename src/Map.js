@@ -10,6 +10,10 @@ var numPlayers = 5;
 var lloydChangeFlag = false;
 
 var edges = {};
+var selectedRegion = null;
+var attackRegion = null;
+
+var currentPlayer = 0;
 
 var directions = [
 	[ 0,-1], // UP
@@ -21,6 +25,44 @@ var directions = [
 	[ 1,-1], // UP RIGHT
 	[ 1, 1]  // DOWN RIGHT
 ];
+
+
+Input.on("touch", function (x, y, key) {
+	var region = Map.regionByTile(key);
+	var owner = regionOwner[region];
+	var n = regionDice[region];
+
+	console.log(region, owner)
+
+	if (!region || (selectedRegion && region === selectedRegion)) {
+		selectedRegion = null;
+		attackRegion = null;
+	} else if (selectedRegion) {
+		console.log(Map.isConnected(selectedRegion, region), owner, selectedRegion, region)
+		if (Map.isConnected(selectedRegion, region) && owner !== currentPlayer) {
+			attackRegion = region;
+
+			attack();
+		}
+	} else {
+		if (owner === currentPlayer && n > 1) {
+			selectedRegion = region;
+		}
+	}
+
+	Map.render();
+});
+
+function attack () {
+	var n = regionDice[selectedRegion];
+	regionOwner[attackRegion] = currentPlayer;
+	regionDice[attackRegion] = n - 1;
+	regionDice[selectedRegion] = 1;
+
+	selectedRegion = null;
+	attackRegion = null;
+	Map.render();
+}
 
 function surrounding (x, y, fn) {
 	for (var i = 0; i < directions.length; ++i) {
@@ -108,6 +150,13 @@ Map.render = function () {
 			var right = translate(directions[3], pos2);
 
 			context.fillStyle = bcolor;
+			if (selectedRegion === key || attackRegion === key) {
+				context.globalAlpha = 0.3;
+				context.fillStyle = "white";
+				context.fillRect(pos2[0] * BLOCK, pos2[1] * BLOCK, BLOCK, BLOCK);
+				context.globalAlpha = 1;
+				context.fillStyle = "black";
+			}
 
 			if (!Map._map[up] || regions.indexOf(up) == -1) {
 				context.fillRect(pos2[0] * BLOCK, pos2[1] * BLOCK - H_BORDER, BLOCK, BORDER);
@@ -125,16 +174,39 @@ Map.render = function () {
 				context.fillRect(pos2[0] * BLOCK + BLOCK - H_BORDER, pos2[1] * BLOCK, BORDER, BLOCK);
 			}
 		}
+	}
+
+	for (var key in Map._regions) {
+		var pos = key.split(",");
+		pos[0] = +pos[0];
+		pos[1] = +pos[1];
 		
-		renderDice(regionDice[key], pos);
+		//context.fillStyle = "rgba(0,0,0,0.3)";
+		//context.fillRect(pos[0] * BLOCK, pos[1] * BLOCK, BLOCK, BLOCK);
+		renderDice(key, pos);
 	}
 };
 
-function renderDice (n, pos) {
-	context.fillStyle = "rgba(0, 0, 0, 0.2)";
-	context.font = "20px Helvetica";
-	context.fillText(n || ".", pos[0] * BLOCK + 4, pos[1] * BLOCK + 18);
-	context.fillRect(pos[0] * BLOCK, pos[1] * BLOCK, BLOCK, BLOCK);
+function renderDice (key, pos) {
+	var x = pos[0] * BLOCK + 10;
+	var y = pos[1] * BLOCK + 10;
+	var n = regionDice[key];
+
+	for (var i = 0; i < n; ++i) {
+		var ny = y - ((i % 4) * 7);
+		var nx = x;
+
+		if (i > 3) {
+			nx = x - 30;
+		}
+
+		var color = BORDER_COLORS[regionOwner[key]];
+		var coinImage = coins[regionOwner[key]];
+		context.shadowColor = color;
+		context.shadowBlur = 10;
+		context.drawImage(coinImage, nx, ny);
+		context.shadowBlur = 0;
+	}
 }
 
 Map.set = function (x, y) {
@@ -318,18 +390,20 @@ Map.iterate = function () {
 
 Map.animate = function () {
 	var frame = 0;
+	var FPS = 1000 / 60;
+
 	setTimeout(function tick () {
 		Map.iterate();
 		frame++;
 
 		if (lloydChangeFlag && frame < 15) {
 			lloydChangeFlag = false;
-			setTimeout(tick, 200);
+			setTimeout(tick, FPS);
 		} else {
 			Map.generateDice();
 			Map.render();
 		}
-	}, 200);
+	}, FPS);
 };
 
 Map.isConnected = function (pos1, pos2) {
@@ -350,7 +424,8 @@ Map.calculateEdges = function () {
 
 			surroundingConnected(pos[0], pos[1], function (nx, ny, next) {
 				if (list.indexOf(next) == -1) {
-					local_edges[next] = 1;
+					var region = Map.regionByTile(next);
+					local_edges[region] = 1;
 				}
 			});
 		}
@@ -373,7 +448,7 @@ Map.calculateEdges = function () {
 
 Map.generateDice = function () {
 	for (var key in Map._regions) {
-		regionDice[key] = clamp(1,4,Math.random()) | 0;
+		regionDice[key] = clamp(2,5,Math.random()) | 0;
 	}
 }
 

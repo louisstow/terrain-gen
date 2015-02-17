@@ -2,6 +2,14 @@ function clamp (min, max, n) {
 	return n * (max - min) + min;
 }
 
+var coins = {};
+var color_list = ["red", "purple", "blue", "green", "yellow"];
+for (var i = 0; i < color_list.length; ++i) {
+	var c = color_list[i];
+	coins[i] = new Image();
+	coins[i].src = "coin-" + c + ".png";
+}
+
 var canvas = document.getElementById("canvas");
 var context = canvas.getContext("2d");
 
