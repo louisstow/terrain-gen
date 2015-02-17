@@ -9,7 +9,6 @@ canvas.width = WIDTH;
 canvas.height = HEIGHT;
 
 Terrain.setCenter(GRID_WIDTH / 2, GRID_HEIGHT / 2);
-Terrain.setEdge(EDGE);
 
 for (var x = 0; x < GRID_WIDTH; ++x) {
 	for (var y = 0; y < GRID_HEIGHT; ++y) {

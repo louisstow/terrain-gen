@@ -103,7 +103,7 @@ function distanceFromPoints (points, pos, min) {
 Map.generatePoints = function () {
 	var keys = Object.keys(Map._map);
 
-	for (var r = 0; r < 15; r++) {
+	for (var r = 0; r < 30; r++) {
 		var idx = Math.random() * keys.length | 0;
 		var point = keys[idx];
 
