@@ -4,16 +4,12 @@ Map._regions = {};
 
 var points = [];
 var regionOwner = {};
-var players = {
-	0: "rgb(255,71,71)",
-	1: "rgb(224,71,255)",
-	2: "rgb(71,139,255)",
-	3: "rgb(71,255,84)",
-	4: "rgb(255,240,71)"
-};
+var regionDice = {};
 
 var numPlayers = 5;
 var lloydChangeFlag = false;
+
+var edges = {};
 
 var directions = [
 	[ 0,-1], // UP
@@ -129,11 +125,17 @@ Map.render = function () {
 				context.fillRect(pos2[0] * BLOCK + BLOCK - H_BORDER, pos2[1] * BLOCK, BORDER, BLOCK);
 			}
 		}
-
-		context.fillStyle = "rgba(0, 0, 0, 0.2)";
-		//context.fillRect(pos[0] * BLOCK, pos[1] * BLOCK, BLOCK, BLOCK);
+		
+		renderDice(regionDice[key], pos);
 	}
 };
+
+function renderDice (n, pos) {
+	context.fillStyle = "rgba(0, 0, 0, 0.2)";
+	context.font = "20px Helvetica";
+	context.fillText(n || ".", pos[0] * BLOCK + 4, pos[1] * BLOCK + 18);
+	context.fillRect(pos[0] * BLOCK, pos[1] * BLOCK, BLOCK, BLOCK);
+}
 
 Map.set = function (x, y) {
 	Map._map[x + "," + y] = 1;
@@ -231,6 +233,17 @@ Map.generateRegions = function () {
 	}
 };
 
+Map.regionByTile = function (pos) {
+	if (Map._regions[pos]) return pos;
+
+	for (var r in Map._regions) {
+		if (Map._regions[r].indexOf(pos) != -1)
+			return r;
+	}
+
+	return false;
+}
+
 function boundingBox (start) {
 	var list = Map._regions[start];
 
@@ -299,19 +312,70 @@ Map.lloydRelaxation = function () {
 Map.iterate = function () {
 	Map.lloydRelaxation();
 	Map.generateRegions();
+	Map.calculateEdges();
 	Map.render();
 };
 
 Map.animate = function () {
+	var frame = 0;
 	setTimeout(function tick () {
 		Map.iterate();
+		frame++;
 
-		if (lloydChangeFlag) {
+		if (lloydChangeFlag && frame < 15) {
 			lloydChangeFlag = false;
 			setTimeout(tick, 200);
+		} else {
+			Map.generateDice();
+			Map.render();
 		}
 	}, 200);
 };
+
+Map.isConnected = function (pos1, pos2) {
+	return edges[pos1 + "-" + pos2] || edges[pos2 + "-" + pos1];
+};
+
+Map.calculateEdges = function () {
+	edges = {};
+
+	for (var key in Map._regions) {
+		var list = Map._regions[key];
+		var local_edges = {};
+
+		for (var i = 0; i < list.length; ++i) {
+			var pos = list[i].split(",");
+			pos[0] = +pos[0];			
+			pos[1] = +pos[1];			
+
+			surroundingConnected(pos[0], pos[1], function (nx, ny, next) {
+				if (list.indexOf(next) == -1) {
+					local_edges[next] = 1;
+				}
+			});
+		}
+
+		if (!Object.keys(local_edges).length) {
+			console.log("NO EDGES", key);
+			for (i = 0; i < list.length; ++i) {
+				delete Map._map[list[i]];
+			}
+
+			delete Map._regions[key];
+			delete regionOwner[key];
+		}
+
+		for (var k in local_edges) {
+			edges[k + "-" + key] = true;
+		}
+	}
+};
+
+Map.generateDice = function () {
+	for (var key in Map._regions) {
+		regionDice[key] = clamp(1,4,Math.random()) | 0;
+	}
+}
 
 Map.init = function () {
 	for (var key in Map._map) {
@@ -323,6 +387,7 @@ Map.init = function () {
 
 	Map.generatePoints();
 	Map.generateRegions();
+	Map.calculateEdges();
 
 	var start = 0;
 	for (var key in Map._regions) {
