@@ -9,3 +9,8 @@ canvas.addEventListener("click", function (e) {
 	console.log(gridX, gridY);
 	Input.emit("touch", gridX, gridY, gridX+","+gridY);
 }, false);
+
+var endTurn = document.getElementById("end");
+endTurn.addEventListener("click", function () {
+	Input.emit("endTurn");
+});

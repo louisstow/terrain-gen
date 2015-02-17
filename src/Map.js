@@ -38,8 +38,9 @@ Input.on("touch", function (x, y, key) {
 		selectedRegion = null;
 		attackRegion = null;
 	} else if (selectedRegion) {
-		console.log(Map.isConnected(selectedRegion, region), owner, selectedRegion, region)
-		if (Map.isConnected(selectedRegion, region) && owner !== currentPlayer) {
+		if (owner === currentPlayer) {
+			if (n > 1) selectedRegion = region;
+		} else if (Map.isConnected(selectedRegion, region)) {
 			attackRegion = region;
 
 			attack();
@@ -51,6 +52,10 @@ Input.on("touch", function (x, y, key) {
 	}
 
 	Map.render();
+});
+
+Input.on("endTurn", function () {
+	console.log("END TURN");
 });
 
 function attack () {
