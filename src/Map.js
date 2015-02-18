@@ -14,6 +14,7 @@ var selectedRegion = null;
 var attackRegion = null;
 
 var currentPlayer = 0;
+var currentTurn = 0;
 
 var directions = [
 	[ 0,-1], // UP
@@ -26,6 +27,10 @@ var directions = [
 	[ 1, 1]  // DOWN RIGHT
 ];
 
+var ais = {};
+for (var i = 1; i < numPlayers; ++i) {
+	ais[i] = new AI({player: i});
+}
 
 Input.on("touch", function (x, y, key) {
 	var region = Map.regionByTile(key);
@@ -56,13 +61,43 @@ Input.on("touch", function (x, y, key) {
 
 Input.on("endTurn", function () {
 	console.log("END TURN");
+	turn();
 });
+
+function turn () {
+	currentTurn = (currentTurn + 1) % numPlayers;
+
+	if (currentTurn === currentPlayer) {
+		// enable controls again
+	} else {
+		// disable controls
+		ais[currentTurn].think(turn);
+	}
+}
 
 function attack () {
 	var n = regionDice[selectedRegion];
-	regionOwner[attackRegion] = currentPlayer;
-	regionDice[attackRegion] = n - 1;
-	regionDice[selectedRegion] = 1;
+	var m = regionDice[attackRegion];
+
+	var score1 = 0;
+	var score2 = 0;
+
+	for (var i = 0; i < n; ++i) {
+		score1 += clamp(1, 7, Math.random()) | 0;
+	}
+
+	for (var i = 0; i < m; ++i) {
+		score2 += clamp(1, 7, Math.random()) | 0;
+	}
+
+	console.log(n, "vs", m, score1, score2)
+	if (score1 >= score2) {
+		regionOwner[attackRegion] = currentPlayer;
+		regionDice[attackRegion] = n - 1;
+		regionDice[selectedRegion] = 1;
+	} else {
+		regionDice[selectedRegion] = 1;
+	}
 
 	selectedRegion = null;
 	attackRegion = null;
@@ -133,8 +168,8 @@ function translate (moveBy, pos) {
 }
 
 Map.render = function () {
-	context.fillStyle = "rgb(180, 230, 255)";
-	context.fillRect(0, 0, canvas.width, canvas.height);
+	// context.fillStyle = "rgb(180, 230, 255)";
+	context.clearRect(0, 0, canvas.width, canvas.height);
 
 	for (var key in Map._regions) {
 		var pos = key.split(",");

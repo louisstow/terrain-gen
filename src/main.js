@@ -13,8 +13,9 @@ for (var i = 0; i < color_list.length; ++i) {
 var canvas = document.getElementById("canvas");
 var context = canvas.getContext("2d");
 
-canvas.width = WIDTH;
-canvas.height = HEIGHT;
+canvas.width = WIDTH + BLOCK * 2;
+canvas.height = HEIGHT + BLOCK * 2;
+context.translate(BLOCK, BLOCK);
 
 Terrain.setCenter(GRID_WIDTH / 2, GRID_HEIGHT / 2);
 
