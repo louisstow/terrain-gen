@@ -1,8 +1,8 @@
 var Input = new Spineless.Event();
 
 canvas.addEventListener("click", function (e) {
-	var translatedX = e.clientX - canvas.offsetLeft - BLOCK;
-	var translatedY = e.clientY - canvas.offsetTop - BLOCK;
+	var translatedX = e.clientX - canvas.offsetLeft - BLOCK + window.scrollX;
+	var translatedY = e.clientY - canvas.offsetTop - BLOCK + window.scrollY;
 
 	var gridX = Math.floor(translatedX / BLOCK);
 	var gridY = Math.floor(translatedY / BLOCK);

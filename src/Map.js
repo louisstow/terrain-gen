@@ -48,7 +48,9 @@ Input.on("touch", function (x, y, key) {
 		} else if (Map.isConnected(selectedRegion, region)) {
 			attackRegion = region;
 
-			attack();
+			attack(selectedRegion, attackRegion, currentPlayer);
+			selectedRegion = null;
+			attackRegion = null;
 		}
 	} else {
 		if (owner === currentPlayer && n > 1) {
@@ -75,9 +77,9 @@ function turn () {
 	}
 }
 
-function attack () {
-	var n = regionDice[selectedRegion];
-	var m = regionDice[attackRegion];
+function attack (from, to, player) {
+	var n = regionDice[from];
+	var m = regionDice[to];
 
 	var score1 = 0;
 	var score2 = 0;
@@ -91,16 +93,14 @@ function attack () {
 	}
 
 	console.log(n, "vs", m, score1, score2)
-	if (score1 >= score2) {
-		regionOwner[attackRegion] = currentPlayer;
-		regionDice[attackRegion] = n - 1;
-		regionDice[selectedRegion] = 1;
+	if (score1 > score2) {
+		regionOwner[to] = player;
+		regionDice[to] = n - 1;
+		regionDice[from] = 1;
 	} else {
-		regionDice[selectedRegion] = 1;
+		regionDice[from] = 1;
 	}
 
-	selectedRegion = null;
-	attackRegion = null;
 	Map.render();
 }
 
@@ -167,53 +167,63 @@ function translate (moveBy, pos) {
 	return x + "," + y;
 }
 
+function drawRegion (key, regions, highlight) {
+	var owner = regionOwner[key];
+	var color = COLORS[owner];
+	var bcolor = BORDER_COLORS[owner];
+
+	for (var i = 0; i < regions.length; ++i) {
+		var pos2 = regions[i].split(",");
+		context.fillStyle = color;
+		context.fillRect(pos2[0] * BLOCK, pos2[1] * BLOCK, BLOCK, BLOCK);
+
+		var up = translate(directions[0], pos2);
+		var down = translate(directions[1], pos2);
+		var left = translate(directions[2], pos2);
+		var right = translate(directions[3], pos2);
+
+		context.fillStyle = bcolor;
+		if (highlight) {
+			context.globalAlpha = 0.3;
+			context.fillStyle = "white";
+			context.fillRect(pos2[0] * BLOCK, pos2[1] * BLOCK, BLOCK, BLOCK);
+			context.globalAlpha = 1;
+			context.fillStyle = "black";
+		}
+
+		if (!Map._map[up] || regions.indexOf(up) == -1) {
+			context.fillRect(pos2[0] * BLOCK, pos2[1] * BLOCK - H_BORDER, BLOCK, BORDER);
+		}
+
+		if (!Map._map[down] || regions.indexOf(down) == -1) {
+			context.fillRect(pos2[0] * BLOCK, pos2[1] * BLOCK + BLOCK - H_BORDER, BLOCK, BORDER);
+		}
+
+		if (!Map._map[left] || regions.indexOf(left) == -1) {
+			context.fillRect(pos2[0] * BLOCK - H_BORDER, pos2[1] * BLOCK, BORDER, BLOCK);
+		}
+		
+		if (!Map._map[right] || regions.indexOf(right) == -1) {
+			context.fillRect(pos2[0] * BLOCK + BLOCK - H_BORDER, pos2[1] * BLOCK, BORDER, BLOCK);
+		}
+	}
+};
+
 Map.render = function () {
 	// context.fillStyle = "rgb(180, 230, 255)";
-	context.clearRect(0, 0, canvas.width, canvas.height);
+	context.clearRect(-BLOCK, -BLOCK, canvas.width, canvas.height);
+	// canvas.width = canvas.width;
 
 	for (var key in Map._regions) {
-		var pos = key.split(",");
 		var regions = Map._regions[key];
 
-		var owner = regionOwner[key];
-		var color = COLORS[owner];
-		var bcolor = BORDER_COLORS[owner];
-
-		for (var i = 0; i < regions.length; ++i) {
-			var pos2 = regions[i].split(",");
-			context.fillStyle = color;
-			context.fillRect(pos2[0] * BLOCK, pos2[1] * BLOCK, BLOCK, BLOCK);
-
-			var up = translate(directions[0], pos2);
-			var down = translate(directions[1], pos2);
-			var left = translate(directions[2], pos2);
-			var right = translate(directions[3], pos2);
-
-			context.fillStyle = bcolor;
-			if (selectedRegion === key || attackRegion === key) {
-				context.globalAlpha = 0.3;
-				context.fillStyle = "white";
-				context.fillRect(pos2[0] * BLOCK, pos2[1] * BLOCK, BLOCK, BLOCK);
-				context.globalAlpha = 1;
-				context.fillStyle = "black";
-			}
-
-			if (!Map._map[up] || regions.indexOf(up) == -1) {
-				context.fillRect(pos2[0] * BLOCK, pos2[1] * BLOCK - H_BORDER, BLOCK, BORDER);
-			}
-
-			if (!Map._map[down] || regions.indexOf(down) == -1) {
-				context.fillRect(pos2[0] * BLOCK, pos2[1] * BLOCK + BLOCK - H_BORDER, BLOCK, BORDER);
-			}
-
-			if (!Map._map[left] || regions.indexOf(left) == -1) {
-				context.fillRect(pos2[0] * BLOCK - H_BORDER, pos2[1] * BLOCK, BORDER, BLOCK);
-			}
-			
-			if (!Map._map[right] || regions.indexOf(right) == -1) {
-				context.fillRect(pos2[0] * BLOCK + BLOCK - H_BORDER, pos2[1] * BLOCK, BORDER, BLOCK);
-			}
+		if (selectedRegion !== key && attackRegion !== key) {
+			drawRegion(key, regions, false);
 		}
+	}
+
+	if (selectedRegion) {
+		drawRegion(selectedRegion, Map._regions[selectedRegion], true);
 	}
 
 	for (var key in Map._regions) {
@@ -221,8 +231,6 @@ Map.render = function () {
 		pos[0] = +pos[0];
 		pos[1] = +pos[1];
 		
-		//context.fillStyle = "rgba(0,0,0,0.3)";
-		//context.fillRect(pos[0] * BLOCK, pos[1] * BLOCK, BLOCK, BLOCK);
 		renderDice(key, pos);
 	}
 };
