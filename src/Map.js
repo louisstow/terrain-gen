@@ -121,13 +121,52 @@ function attack (from, to, player) {
 	Map.render();
 }
 
+function randomize (a, b) {
+	return Math.round(clamp(-1, 2, Math.random()));
+}
+
 function distributeDice (player) {
 	var regions = Map.regionsByPlayer(player);
+	var total = 0;
+
+	var visited = {};
+	
+	// count connected regions
 	for (var i = 0; i < regions.length; ++i) {
-		var r = regions[i];
-		regionDice[r]++;
+		for (var j = 0; j < regions.length; ++j) {
+			var key1 = regions[i] + "," + regions[j];
+			var key2 = regions[j] + "," + regions[i];
+			
+			if (visited[key1] || visited[key2])
+				continue;
+
+			visited[key1] = true;
+			visited[key2] = true;
+
+			if (Map.isConnected(regions[i], regions[j])) {
+				total++;
+				break;
+			}
+		}
 	}
 
+	for (var i = 0; i < regions.length; ++i) {
+		var dice = regionDice[regions[i]];
+		if (dice === 8) {
+			total -= 2;
+		}
+	}
+
+	for (var i = 0; i < total; ++i) {
+		var index = Math.random() * regions.length | 0;
+		var region = regions[index];
+		var dice = regionDice[region];
+		
+		if (dice !== 8)
+			regionDice[region]++;
+	}
+
+	console.log("TOTL", total);
 	Map.render();
 }
 
@@ -558,7 +597,5 @@ Map.init = function () {
 		start = (start + 1) % numPlayers;
 	}
 
-	playerOrder.sort(function (a, b) {
-		return Math.round(clamp(-1, 2, Math.random()));
-	});
+	playerOrder.sort(randomize);
 };
