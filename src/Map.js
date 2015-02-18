@@ -37,6 +37,10 @@ for (var i = 1; i < numPlayers; ++i) {
 var inputAvailable = false;
 
 Input.on("touch", function (x, y, key) {
+	if (!inputAvailable) {
+		return;
+	}
+
 	var region = Map.regionByTile(key);
 	var owner = regionOwner[region];
 	var n = regionDice[region];
@@ -50,11 +54,16 @@ Input.on("touch", function (x, y, key) {
 		if (owner === currentPlayer) {
 			if (n > 1) selectedRegion = region;
 		} else if (Map.isConnected(selectedRegion, region)) {
-			attackRegion = region;
 
-			attack(selectedRegion, attackRegion, currentPlayer);
-			selectedRegion = null;
-			attackRegion = null;
+			attackRegion = region;
+			Map.render();
+
+			setTimeout(function () {
+				attack(selectedRegion, attackRegion, currentPlayer);
+				
+				selectedRegion = null;
+				attackRegion = null;
+			}, QUICK);
 		}
 	} else {
 		if (owner === currentPlayer && n > 1) {
@@ -89,7 +98,7 @@ function turn () {
 		inputAvailable = true;
 	} else {
 		// disable controls
-		inputAvailable = true;
+		inputAvailable = false;
 		ais[player].think(turn);
 	}
 }
@@ -118,6 +127,8 @@ function attack (from, to, player) {
 		regionDice[from] = 1;
 	}
 
+	selectedRegion = null;
+	attackRegion = null;
 	Map.render();
 }
 
@@ -129,32 +140,9 @@ function distributeDice (player) {
 	var regions = Map.regionsByPlayer(player);
 	var total = 0;
 
-	var visited = {};
-	
 	// count connected regions
 	for (var i = 0; i < regions.length; ++i) {
-		for (var j = 0; j < regions.length; ++j) {
-			var key1 = regions[i] + "," + regions[j];
-			var key2 = regions[j] + "," + regions[i];
-			
-			if (visited[key1] || visited[key2])
-				continue;
-
-			visited[key1] = true;
-			visited[key2] = true;
-
-			if (Map.isConnected(regions[i], regions[j])) {
-				total++;
-				break;
-			}
-		}
-	}
-
-	for (var i = 0; i < regions.length; ++i) {
-		var dice = regionDice[regions[i]];
-		if (dice === 8) {
-			total -= 2;
-		}
+		total++;
 	}
 
 	for (var i = 0; i < total; ++i) {
@@ -237,6 +225,15 @@ function drawRegion (key, regions, highlight) {
 	var owner = regionOwner[key];
 	var color = COLORS[owner];
 	var bcolor = BORDER_COLORS[owner];
+	var hcolor;
+
+	if (highlight === 1) {
+		bcolor = "black";
+		hcolor = "white";
+	} else if (highlight === 2) {
+		bcolor = "white";
+		hcolor = "black";
+	}
 
 	for (var i = 0; i < regions.length; ++i) {
 		var pos2 = regions[i].split(",");
@@ -248,14 +245,15 @@ function drawRegion (key, regions, highlight) {
 		var left = translate(directions[2], pos2);
 		var right = translate(directions[3], pos2);
 
-		context.fillStyle = bcolor;
+		
 		if (highlight) {
 			context.globalAlpha = 0.3;
-			context.fillStyle = "white";
+			context.fillStyle = hcolor;
 			context.fillRect(pos2[0] * BLOCK, pos2[1] * BLOCK, BLOCK, BLOCK);
 			context.globalAlpha = 1;
-			context.fillStyle = "black";
 		}
+
+		context.fillStyle = bcolor;
 
 		if (!Map._map[up] || regions.indexOf(up) == -1) {
 			context.fillRect(pos2[0] * BLOCK, pos2[1] * BLOCK - H_BORDER, BLOCK, BORDER);
@@ -289,7 +287,11 @@ Map.render = function () {
 	}
 
 	if (selectedRegion) {
-		drawRegion(selectedRegion, Map._regions[selectedRegion], true);
+		drawRegion(selectedRegion, Map._regions[selectedRegion], 1);
+	}
+
+	if (attackRegion) {
+		drawRegion(attackRegion, Map._regions[attackRegion], 2);
 	}
 
 	for (var key in Map._regions) {

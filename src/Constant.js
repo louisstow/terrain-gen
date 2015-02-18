@@ -24,3 +24,6 @@ var BORDER_COLORS = {
 	3: "rgb(38, 140, 45)",
 	4: "rgb(148, 139, 41)"
 };
+
+var QUICK = 300;
+var SLOW = 500;

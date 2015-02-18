@@ -29,20 +29,41 @@ var AI = Spineless.Event.extend({
 
 	think: function (next) {
 		var regions = this.getRegions();
+		var me = this;
+
 		for (var i = 0; i < regions.length; ++i) {
 			var r = regions[i];
 			var myDice = regionDice[r];
 			if (myDice === 1) continue;
 
 			var neighbors = this.getNeighbors(r);
+			neighbors.sort(randomize);
 			
 			for (var n = 0; n < neighbors.length; ++n) {
 				var enemy = neighbors[n];
 				var dice = regionDice[enemy];
 				
 				if (myDice >= dice) {
-					attack(r, enemy, this.player);
-					return this.think(next);
+					selectedRegion = r;
+					Map.render();
+
+					setTimeout(function () {
+						attackRegion = enemy;
+						Map.render();
+
+						setTimeout(function () {
+							attack(r, enemy, me.player);
+							selectedRegion = null;
+							attackRegion = null;
+							Map.render();
+
+							setTimeout(function () {
+								me.think(next);
+							}, QUICK);
+						}, SLOW);
+					}, QUICK);
+
+					return;
 				}
 			}
 		}
