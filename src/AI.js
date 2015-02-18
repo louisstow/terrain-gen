@@ -5,14 +5,7 @@ var AI = Spineless.Event.extend({
 	},
 
 	getRegions: function () {
-		var list = [];
-
-		for (var key in regionOwner) {
-			if (regionOwner[key] == this.player)
-				list.push(key);
-		}
-
-		return list;
+		return Map.regionsByPlayer(this.player);
 	},
 
 	getNeighbors: function (region) {

@@ -14,7 +14,7 @@ var selectedRegion = null;
 var attackRegion = null;
 
 var currentPlayer = 0;
-var currentTurn = 0;
+var currentTurn = -1;
 
 var directions = [
 	[ 0,-1], // UP
@@ -27,10 +27,14 @@ var directions = [
 	[ 1, 1]  // DOWN RIGHT
 ];
 
+var playerOrder = [0,1,2,3,4];
+
 var ais = {};
 for (var i = 1; i < numPlayers; ++i) {
 	ais[i] = new AI({player: i});
 }
+
+var inputAvailable = false;
 
 Input.on("touch", function (x, y, key) {
 	var region = Map.regionByTile(key);
@@ -63,17 +67,30 @@ Input.on("touch", function (x, y, key) {
 
 Input.on("endTurn", function () {
 	console.log("END TURN");
-	turn();
+	if (inputAvailable)
+		turn();
 });
 
 function turn () {
-	currentTurn = (currentTurn + 1) % numPlayers;
+	var player;
 
-	if (currentTurn === currentPlayer) {
+	if (currentTurn !== -1) {
+		// distribute dice
+		player = playerOrder[currentTurn];
+		distributeDice(player);
+	}
+
+	currentTurn = (currentTurn + 1) % numPlayers;
+	player = playerOrder[currentTurn];
+
+	console.log(currentPlayer, player);
+	if (player === currentPlayer) {
 		// enable controls again
+		inputAvailable = true;
 	} else {
 		// disable controls
-		ais[currentTurn].think(turn);
+		inputAvailable = true;
+		ais[player].think(turn);
 	}
 }
 
@@ -99,6 +116,16 @@ function attack (from, to, player) {
 		regionDice[from] = 1;
 	} else {
 		regionDice[from] = 1;
+	}
+
+	Map.render();
+}
+
+function distributeDice (player) {
+	var regions = Map.regionsByPlayer(player);
+	for (var i = 0; i < regions.length; ++i) {
+		var r = regions[i];
+		regionDice[r]++;
 	}
 
 	Map.render();
@@ -362,7 +389,18 @@ Map.regionByTile = function (pos) {
 	}
 
 	return false;
-}
+};
+
+Map.regionsByPlayer = function (player) {
+	var list = [];
+
+	for (var key in regionOwner) {
+		if (regionOwner[key] == player)
+			list.push(key);
+	}
+
+	return list;
+};
 
 function boundingBox (start) {
 	var list = Map._regions[start];
@@ -450,6 +488,8 @@ Map.animate = function () {
 		} else {
 			Map.generateDice();
 			Map.render();
+
+			turn();
 		}
 	}, FPS);
 };
@@ -517,4 +557,8 @@ Map.init = function () {
 		regionOwner[key] = start;
 		start = (start + 1) % numPlayers;
 	}
+
+	playerOrder.sort(function (a, b) {
+		return Math.round(clamp(-1, 2, Math.random()));
+	});
 };
