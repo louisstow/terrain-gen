@@ -13,6 +13,7 @@ var Player = Spineless.View.extend({
 	defaults: {
 		regions: 0,
 		color: "",
+		id: null,
 		selected: false
 	},
 
@@ -23,6 +24,7 @@ var Player = Spineless.View.extend({
 
 	render: function () {
 		if (this.model.regions == 0) {
+			Map.emit("genocide", this.model.id);
 			return this.removeFromParent();
 		}
 

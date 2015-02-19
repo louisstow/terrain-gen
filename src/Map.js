@@ -80,8 +80,29 @@ Input.on("endTurn", function () {
 		turn();
 });
 
+Map.on("genocide", function (id) {
+	var index = playerOrder.indexOf(id);
+	if (index == -1) return;
+
+	playerOrder.splice(index, 1);
+	numPlayers--;
+
+	if (id === currentPlayer) {
+		overlay.style.display = "block";
+		win.style.display = "none";
+		lose.style.display = "block";
+	} else if (playerOrder.length == 1 && playerOrder[0] !== currentPlayer) {
+		overlay.style.display = "block";
+		win.style.display = "block";
+		lose.style.display = "none";
+	}
+});
+
 function turn () {
 	var player;
+
+	if (numPlayers <= 1)
+		return;
 
 	if (currentTurn !== -1) {
 		// distribute dice

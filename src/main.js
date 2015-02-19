@@ -13,6 +13,9 @@ for (var i = 0; i < color_list.length; ++i) {
 var canvas = document.getElementById("canvas");
 var context = canvas.getContext("2d");
 var frame = document.getElementById("frame");
+var overlay = document.getElementById("overlay");
+var win = document.getElementById("win");
+var lose = document.getElementById("lose");
 
 canvas.width = WIDTH + BLOCK * 2;
 canvas.height = HEIGHT + BLOCK * 2;
@@ -44,9 +47,14 @@ for (var i = 0; i < playerOrder.length; ++i) {
 
 	var p = new Player({
 		color: color,
-		regions: regions.length
+		regions: regions.length,
+		id: player
 	});
 
 	playerView.addChild(p);
 	playerView.map[player] = p;
 }
+
+document.getElementById("restart").onclick = function () {
+	window.location.reload();
+};
