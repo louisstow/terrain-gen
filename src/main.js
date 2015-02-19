@@ -12,6 +12,7 @@ for (var i = 0; i < color_list.length; ++i) {
 
 var canvas = document.getElementById("canvas");
 var context = canvas.getContext("2d");
+var frame = document.getElementById("frame");
 
 canvas.width = WIDTH + BLOCK * 2;
 canvas.height = HEIGHT + BLOCK * 2;

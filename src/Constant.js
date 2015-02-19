@@ -1,4 +1,5 @@
 var BLOCK = 20;
+var H_BLOCK = BLOCK / 2;
 var GRID_WIDTH = 36;
 var GRID_HEIGHT = 32;
 
