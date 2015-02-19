@@ -91,7 +91,7 @@ Map.on("genocide", function (id) {
 		overlay.style.display = "block";
 		win.style.display = "none";
 		lose.style.display = "block";
-	} else if (playerOrder.length == 1 && playerOrder[0] !== currentPlayer) {
+	} else if (playerOrder.length == 1 && playerOrder[0] == currentPlayer) {
 		overlay.style.display = "block";
 		win.style.display = "block";
 		lose.style.display = "none";
