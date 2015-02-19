@@ -7,6 +7,34 @@
 	<style>
 	#frame {
 		border: 2px solid #ccc;
+		width: 830px;
+		position: relative;
+	}
+
+	#players {
+		position: absolute;
+		right: 10px;
+		top: 20px;
+		width: 65px;
+	}
+
+	#players .container {
+		font-family: Helvetica, sans-serif;
+		margin-bottom: 10px;
+		padding: 5px;
+	}
+
+	#players .container.selected {
+		background: #ddd;
+	}
+
+	#players .container img {
+		vertical-align: middle;
+		margin-right: 5px;
+	}
+
+	#players .container span {
+		font-weight: 900;
 	}
 	</style>
 </head>
@@ -26,9 +54,9 @@
 <script src="./src/Constant.js"></script>
 <script src="./src/Input.js"></script>
 <script src="./src/Terrain.js"></script>
-<script src="./src/Players.js"></script>
 <script src="./src/AI.js"></script>
 <script src="./src/Map.js"></script>
+<script src="./src/Players.js"></script>
 <script src="./src/main.js"></script>
 
 </body>

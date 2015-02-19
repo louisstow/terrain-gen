@@ -32,3 +32,20 @@ for (var x = 0; x < GRID_WIDTH; ++x) {
 Map.init();
 Map.render();
 Map.animate();
+
+var playerView = new Players();
+
+for (var i = 0; i < playerOrder.length; ++i) {
+	var player = playerOrder[i];
+	var color = color_list[player];
+
+	var regions = Map.regionsByPlayer(player);
+
+	var p = new Player({
+		color: color,
+		regions: regions.length
+	});
+
+	playerView.addChild(p);
+	playerView.map[player] = p;
+}

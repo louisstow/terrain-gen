@@ -91,6 +91,7 @@ function turn () {
 
 	currentTurn = (currentTurn + 1) % numPlayers;
 	player = playerOrder[currentTurn];
+	playerView.select(player);
 
 	console.log(currentPlayer, player);
 	if (player === currentPlayer) {
@@ -120,9 +121,13 @@ function attack (from, to, player) {
 
 	console.log(n, "vs", m, score1, score2)
 	if (score1 > score2) {
+		var loser = regionOwner[to];
 		regionOwner[to] = player;
 		regionDice[to] = n - 1;
 		regionDice[from] = 1;
+
+		playerView.map[player].set("regions", playerView.map[player].model.regions + 1);
+		playerView.map[ loser].set("regions", playerView.map[ loser].model.regions - 1);
 	} else {
 		regionDice[from] = 1;
 	}
